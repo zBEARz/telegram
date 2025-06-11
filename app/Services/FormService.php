@@ -2,26 +2,19 @@
 
 namespace App\Services;
 
-use App\Notifications\ExampleNotification;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Notification;
+use App\Http\Requests\FormSubmitRequest;
 
 class FormService
 {
-    public function validateAndSubmit(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|email',
-            'message' => 'required'
-        ]);
+    protected $telegramService;
 
-        $this->sendNotification($request);
+    public function __construct(TelegramService $telegramService)
+    {
+        $this->telegramService = $telegramService;
     }
 
-    public function sendNotification(Request $request, bool $isError = false, string $errorMessage = null)
+    public function handle(FormSubmitRequest $request)
     {
-        Notification::route('telegram', '1681133711')
-            ->notify(new ExampleNotification($request, $isError, $errorMessage));
+        $this->telegramService->sendMessage($request);
     }
 }

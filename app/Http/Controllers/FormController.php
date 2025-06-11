@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\FormSubmitRequest;
 use App\Services\FormService;
 use Exception;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class FormController extends Controller
 {
@@ -21,24 +20,12 @@ class FormController extends Controller
         return view('form');
     }
 
-    public function submit(Request $request)
+    public function submit(FormSubmitRequest $request)
     {
         try {
-            $this->formService->validateAndSubmit($request);
-
-            return response()->json([
-                'message' => 'Сообщение успешно отправлено'
-            ]);
-        } catch (ValidationException $e) {
-            $this->formService->sendNotification($request, true, 'Ошибка: ' . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Ошибка',
-                'errors' => $e->errors()
-            ], 500);
+            $this->formService->handle($request);
+            return response()->json(['message' => 'Сообщение успешно отправлено']);
         } catch (Exception $e) {
-            $this->formService->sendNotification($request, true, 'Системная ошибка: ' . $e->getMessage());
-
             return response()->json([
                 'message' => 'Произошла ошибка',
                 'error' => $e->getMessage()

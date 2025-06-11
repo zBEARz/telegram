@@ -4,25 +4,23 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\Log;
 use NotificationChannels\Telegram\TelegramChannel;
 use NotificationChannels\Telegram\TelegramMessage;
-use Exception;
 
 class ExampleNotification extends Notification
 {
     use Queueable;
 
-    protected $request;
+    protected $data;
     protected $isError;
     protected $errorMessage;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($request, $isError = false, $errorMessage = null)
+    public function __construct($data, bool $isError = false, string $errorMessage = null)
     {
-        $this->request = $request;
+        $this->data = $data;
         $this->isError = $isError;
         $this->errorMessage = $errorMessage;
     }
@@ -32,7 +30,7 @@ class ExampleNotification extends Notification
      *
      * @return array<int, string>
      */
-    public function via(object $notifiable): array
+    public function via($notifiable): array
     {
         return [TelegramChannel::class];
     }
@@ -42,26 +40,29 @@ class ExampleNotification extends Notification
      */
     public function toTelegram($notifiable)
     {
-        try {
-            if ($this->isError) {
-                $message = "ОШИБКА В СИСТЕМЕ\n\n";
-                $message .= "Детали ошибки: {$this->errorMessage}\n\n";
-                $message .= "Данные запроса:\n";
-                $message .= "Имя: {$this->request->name}\n";
-                $message .= "Email: {$this->request->email}\n";
-                $message .= "Сообщение: {$this->request->message}";
-            } else {
-                $message = "Новое сообщение\n\n";
-                $message .= "Имя: {$this->request->name}\n";
-                $message .= "Email: {$this->request->email}\n";
-                $message .= "Сообщение: {$this->request->message}";
-            }
+        $message = $this->isError
+            ? $this->formatErrorMessage()
+            : $this->formatSuccessMessage();
 
-            return TelegramMessage::create()
-                ->content($message);
-        } catch (Exception $ex) {
-            Log::error($ex);
-        }
+        return TelegramMessage::create()->content($message);
+    }
+
+    protected function formatErrorMessage(): string
+    {
+        return "❌ ОШИБКА В СИСТЕМЕ\n\n" .
+            "Детали ошибки: {$this->errorMessage}\n\n" .
+            "Данные запроса:\n" .
+            "Имя: {$this->data->name}\n" .
+            "Email: {$this->data->email}\n" .
+            "Сообщение: {$this->data->message}";
+    }
+
+    protected function formatSuccessMessage(): string
+    {
+        return "✅ Новое сообщение\n\n" .
+            "Имя: {$this->data->name}\n" .
+            "Email: {$this->data->email}\n" .
+            "Сообщение: {$this->data->message}";
     }
 
     /**
