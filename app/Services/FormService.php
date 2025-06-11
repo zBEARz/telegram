@@ -17,4 +17,9 @@ class FormService
     {
         $this->telegramService->sendMessage($request);
     }
+
+    public function handleError($request, string $errorMessage)
+    {
+        $this->telegramService->sendMessage($request, true, $errorMessage);
+    }
 }

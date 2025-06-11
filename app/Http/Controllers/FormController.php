@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\FormSubmitRequest;
-use App\Services\FormService;
+use App\Services\TelegramService;
 use Exception;
 
 class FormController extends Controller
 {
-    protected $formService;
+    protected $telegramService;
 
-    public function __construct(FormService $formService)
+    public function __construct(TelegramService $telegramService)
     {
-        $this->formService = $formService;
+        $this->telegramService = $telegramService;
     }
 
     public function showForm()
@@ -23,9 +23,10 @@ class FormController extends Controller
     public function submit(FormSubmitRequest $request)
     {
         try {
-            $this->formService->handle($request);
+            $this->telegramService->sendMessage($request);
             return response()->json(['message' => 'Сообщение успешно отправлено']);
         } catch (Exception $e) {
+            $this->telegramService->sendMessage($request, true, $e->getMessage());
             return response()->json([
                 'message' => 'Произошла ошибка',
                 'error' => $e->getMessage()

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Notifications\ExampleNotification;
 use Illuminate\Support\Facades\Notification;
+use Exception;
 
 class TelegramService
 {
@@ -11,7 +12,15 @@ class TelegramService
     {
         $chatId = config('services.telegram-bot-api.chat_id');
 
-        Notification::route('telegram', $chatId)
-            ->notify(new ExampleNotification($data, $isError, $errorMessage));
+        if (!$chatId) {
+            throw new Exception('Telegram chat ID не настроен');
+        }
+
+        try {
+            Notification::route('telegram', $chatId)
+                ->notify(new ExampleNotification($data, $isError, $errorMessage));
+        } catch (Exception $e) {
+            throw new Exception('Ошибка отправки в Telegram: ' . $e->getMessage());
+        }
     }
 }
